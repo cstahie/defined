@@ -29,34 +29,41 @@ if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
   die "Version must look like 1.2.3 — numbers only, no 'v' and no '-SNAPSHOT'."
 fi
 
-# Refuse to re-release a version that already exists (releases are forever).
-if [ -d "maven-repo/com/teamundefined/defined-core/$VERSION" ]; then
+# If this version is already built locally we don't rebuild it. We only allow
+# re-running to PUSH it (e.g. you released before adding the GitHub remote).
+ALREADY_BUILT=false
+[ -d "maven-repo/com/teamundefined/defined-core/$VERSION" ] && ALREADY_BUILT=true
+if $ALREADY_BUILT && ! git remote get-url origin >/dev/null 2>&1; then
   die "Version $VERSION was already published. Pick a new, higher number."
 fi
 
 say "🤖 Releasing Defined v$VERSION"
 
-# ----- 1. set the version in gradle.properties -----
-say "1/5  Setting version to $VERSION"
-sed -i.bak "s/^version=.*/version=$VERSION/" gradle.properties && rm -f gradle.properties.bak
-ok "version=$VERSION"
+if $ALREADY_BUILT; then
+  warn "v$VERSION is already built locally — skipping build, just pushing it."
+else
+  # ----- 1. set the version in gradle.properties -----
+  say "1/5  Setting version to $VERSION"
+  sed -i.bak "s/^version=.*/version=$VERSION/" gradle.properties && rm -f gradle.properties.bak
+  ok "version=$VERSION"
 
-# ----- 2. build + test (fails loudly if a test is red) -----
-say "2/5  Building and testing everything (this can take a minute)"
-./gradlew clean build || die "Build/tests failed — fix the errors above, nothing was released."
-ok "All tests passed"
+  # ----- 2. build + test (fails loudly if a test is red) -----
+  say "2/5  Building and testing everything (this can take a minute)"
+  ./gradlew clean build || die "Build/tests failed — fix the errors above, nothing was released."
+  ok "All tests passed"
 
-# ----- 3. package into the Maven repo folder -----
-say "3/5  Packaging into ./maven-repo"
-./gradlew publishToPages
-ok "Artifacts written to maven-repo/com/teamundefined/"
+  # ----- 3. package into the Maven repo folder -----
+  say "3/5  Packaging into ./maven-repo"
+  ./gradlew publishToPages
+  ok "Artifacts written to maven-repo/com/teamundefined/"
 
-# ----- 4. commit + tag -----
-say "4/5  Saving the release in git"
-git add gradle.properties maven-repo
-git commit -q -m "release: v$VERSION" || warn "Nothing new to commit"
-git tag "v$VERSION" 2>/dev/null || warn "Tag v$VERSION already exists"
-ok "Committed and tagged v$VERSION"
+  # ----- 4. commit + tag -----
+  say "4/5  Saving the release in git"
+  git add gradle.properties maven-repo
+  git commit -q -m "release: v$VERSION" || warn "Nothing new to commit"
+  git tag "v$VERSION" 2>/dev/null || warn "Tag v$VERSION already exists"
+  ok "Committed and tagged v$VERSION"
+fi
 
 # ----- 5. push to GitHub + update the gh-pages Maven site -----
 if git remote get-url origin >/dev/null 2>&1; then
