@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <!-- This module was also published with a richer model, Gradle metadata,  -->
+  <!-- which should be used instead. Do not delete the following line which  -->
+  <!-- is to indicate to Gradle or any Gradle module metadata file consumer  -->
+  <!-- that they should prefer consuming it instead. -->
+  <!-- do_not_remove: published-with-gradle-metadata -->
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.teamundefined</groupId>
+  <artifactId>defined-ftc</artifactId>
+  <version>0.1.0</version>
+  <packaging>aar</packaging>
+  <name>Defined FTC</name>
+  <description>FTC SDK glue for the Defined action engine: Android logging bridge, gamepad helpers, and an action-driven OpMode base.</description>
+  <url>https://github.com/team-undefined/defined</url>
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>https://opensource.org/licenses/MIT</url>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>team-undefined</id>
+      <name>FTC Team 19112 — Undefined</name>
+      <url>https://teamundefined.com</url>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git:https://github.com/team-undefined/defined.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/team-undefined/defined.git</developerConnection>
+    <url>https://github.com/team-undefined/defined</url>
+  </scm>
+  <dependencies>
+    <dependency>
+      <groupId>com.teamundefined</groupId>
+      <artifactId>defined-core</artifactId>
+      <version>0.1.0</version>
+      <scope>compile</scope>
+    </dependency>
+  </dependencies>
+</project>
