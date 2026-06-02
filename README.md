@@ -75,6 +75,108 @@ graph TD
 
 ---
 
+## Architecture at a glance
+
+**How a match flows** — your `TeleOp`/`Auto` feed a clock to the `ActionRunner`,
+which ticks monitors and slot‑managed groups; each `Action` commands a subsystem:
+
+```mermaid
+flowchart TD
+    subgraph op["Your OpModes"]
+        TELE["TeleOp — loop()"]
+        AUTO["Auto — one composed Action"]
+    end
+
+    TELE -->|"addMonitor(...) + startGroup(...)"| RUN
+    AUTO -->|"update(now)"| SEQ["SequentialAction<br/>(drive → intake → shoot → park)"]
+
+    RUN["ActionRunner<br/>update(now) every loop"]
+    RUN --> MON["Monitors<br/><i>slot-free, run forever</i><br/>drive · intake toggle · turret toggle"]
+    RUN --> GRP["Slotted groups<br/><i>one owner per slot</i>"]
+
+    MON --> ACT["Actions"]
+    GRP --> ACT
+    SEQ --> ACT
+
+    ACT -->|"read sensors / set power"| SUB["Subsystems<br/>Drive · Intake · Flywheel · Indexer · Turret"]
+
+    GRP -. "claim" .-> SLOTS[("Slots")]
+    SLOTS -. "guarantee exclusivity" .-> SUB
+
+    classDef om fill:#1f6feb,stroke:#0b3d91,color:#fff;
+    classDef run fill:#238636,stroke:#0f5323,color:#fff;
+    class TELE,AUTO om;
+    class RUN run;
+```
+
+**Slots — the safety mechanism.** Each action declares the subsystems it controls
+with `.requires(...)`. The runner guarantees only one action holds a slot at a time;
+a new action that wants a busy slot **cancels** the current one and is **queued**.
+
+```mermaid
+flowchart LR
+    subgraph acts["Actions declare what they need"]
+        a3["driveTo()"]
+        a4["intakeUntil()"]
+        a2["shootLoaded()"]
+        a1["aim()"]
+    end
+
+    a3 -->|requires| DRIVE(("DRIVE"))
+    a4 -->|requires| INTAKE(("INTAKE"))
+    a2 -->|requires| FLY(("FLYWHEEL"))
+    a2 -->|requires| IDX(("INDEXER"))
+    a1 -->|requires| TUR(("TURRET"))
+
+    DRIVE --> dh["Drive"]
+    INTAKE --> ih["Intake"]
+    FLY --> fh["Flywheel"]
+    IDX --> xh["Indexer"]
+    TUR --> th["Turret"]
+
+    note["Two actions wanting the same slot?<br/>Runner cancels the loser, queues the winner.<br/>Independent slots run concurrently."]
+```
+
+**The action toolbox** — everything is an `Action`; composites nest arbitrarily:
+
+```mermaid
+flowchart TD
+    A["Action<br/><i>state machine: NONE→RUNNING→COMPLETE/ERROR/TIMEOUT/CANCELED</i>"]
+
+    A --> COMP["Composition<br/>Sequential · Parallel · RaceGroup · Repeat"]
+    A --> FLOW["Control flow<br/>If · Switch · Guarded · NoOp"]
+    A --> TIME["Timing & waits<br/>Wait · WaitUntil · Timeout · Deadline · Continuous · Hold"]
+    A --> IN["Driver input<br/>EdgeTrigger · Toggle · DoubleTap · Debounce · Latch"]
+    A --> ERR["Error handling<br/>Try · Failsafe · FailFast · Ensure · Require · Finally"]
+    A --> RATE["Rate control<br/>RateLimit · Throttled"]
+    A --> REL["Reliability<br/>Watchdog · CancelOn · ManualOverride · RetryUntilConfident · Metric"]
+    A --> PED["Pedro (defined-pedro)<br/>Navigation · FollowPath · HeadingLock · ZoneMonitor"]
+```
+
+**The Pedro layer** — Pedro actions wrap a `Follower` so path‑following composes
+like any other action (and slots keep DRIVE exclusive):
+
+```mermaid
+flowchart LR
+    NAV["NavigationAction<br/><i>A→B · waypoints · joystick override</i>"]
+    FP["FollowPathAction"]
+    HL["HeadingLockAction"]
+    ZM["ZoneMonitor"]
+    PU["PathUtils<br/><i>optimized minimal-strafe paths</i>"]
+
+    NAV -->|requires| DRIVE2(("DRIVE slot"))
+    NAV --> FOL["Pedro Follower<br/>followPath · isBusy · getPose · turnTo"]
+    FP --> FOL
+    HL --> FOL
+    ZM --> FOL
+    NAV -.uses.-> PU --> FOL
+```
+
+> See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the runner's full arbitration
+> flow and the state machine in depth.
+
+---
+
 ## Install
 
 > Not yet published publicly. Once the first release is cut (one command:

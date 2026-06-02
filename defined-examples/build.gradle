@@ -12,7 +12,7 @@ java {
 }
 
 application {
-    mainClass = 'com.teamundefined.defined.examples.SimpleRobotDemo'
+    mainClass = 'com.teamundefined.defined.examples.Match'
 }
 
 dependencies {
