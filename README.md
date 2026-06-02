@@ -77,12 +77,13 @@ graph TD
 
 ## Install
 
-> Not yet published. The snippets below are how consumption will work once the
-> first release is cut. See [docs/RELEASING.md](docs/RELEASING.md).
-
-### Gradle (Maven Central, planned)
+> Not yet published publicly. Once the first release is cut (one command:
+> `./release.sh 0.1.0`), teams consume it from our GitHub Pages Maven repo:
 
 ```gradle
+repositories {
+    maven { url 'https://<org>.github.io/<repo>' }
+}
 dependencies {
     implementation "com.teamundefined:defined-core:<version>"
     implementation "com.teamundefined:defined-ftc:<version>"     // optional FTC glue
@@ -90,15 +91,8 @@ dependencies {
 }
 ```
 
-### Gradle (JitPack, zero‑infra fallback)
-
-```gradle
-repositories { maven { url 'https://jitpack.io' } }
-
-dependencies {
-    implementation "com.github.team-undefined.defined:defined-core:<tag>"
-}
-```
+Releasing is one student-friendly command — see [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md).
+For the (optional) Maven Central path, see [docs/RELEASING.md](docs/RELEASING.md).
 
 ---
 

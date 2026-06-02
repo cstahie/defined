@@ -17,3 +17,12 @@ subprojects {
         options.addStringOption('Xdoclint:none', '-quiet')
     }
 }
+
+// One command to publish every module into <root>/maven-repo (the gh-pages payload).
+tasks.register('publishToPages') {
+    group = 'publishing'
+    description = 'Publish all modules into ./maven-repo for gh-pages hosting.'
+    dependsOn subprojects.collect { sp ->
+        sp.tasks.matching { it.name == 'publishReleasePublicationToPagesRepository' }
+    }
+}
