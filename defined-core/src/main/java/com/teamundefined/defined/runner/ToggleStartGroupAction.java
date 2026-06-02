@@ -19,7 +19,9 @@ public class ToggleStartGroupAction extends Action {
     private long lastToggleTime = 0;
     private static final long DEBOUNCE_MS = 100; // Minimum time between toggles
 
-    private static Action lastExecutedAction = null;
+    // Per-instance: tracks the action this toggle last started, so a self-cancel
+    // (e.g. via FinallyAction cleanup) flips the toggle back OFF automatically.
+    private Action lastExecutedAction = null;
 
     /**
      * Reset the toggle state - call this when the OpMode starts

@@ -1,0 +1,19 @@
+// Root build for the Defined multi-module project.
+// Pure-Java modules use 'java-library'; FTC/Pedro modules use 'com.android.library'.
+plugins {
+    id 'com.android.library' version '8.7.0' apply false
+}
+
+// FTC SDK / Pedro versions, shared by the Android modules.
+ext {
+    ftcSdkVersion = '11.1.0'
+    pedroVersion = '2.0.6'
+}
+
+// Javadoc carries imperfect legacy comments from the original robot code; keep
+// doclint lenient so a published Javadoc jar never blocks a release.
+subprojects {
+    tasks.withType(Javadoc).configureEach {
+        options.addStringOption('Xdoclint:none', '-quiet')
+    }
+}

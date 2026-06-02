@@ -1,0 +1,29 @@
+plugins {
+    id 'java-library'
+    id 'application'
+}
+
+// Pure-Java example project: a simulated robot wired up with the Defined engine.
+// Runs and is fully testable on any desktop — no Android or hardware required.
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+application {
+    mainClass = 'com.teamundefined.defined.examples.SimpleRobotDemo'
+}
+
+dependencies {
+    implementation project(':defined-core')
+
+    testImplementation platform('org.junit:junit-bom:5.10.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging { events "passed", "skipped", "failed" }
+}

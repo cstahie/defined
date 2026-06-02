@@ -77,9 +77,21 @@ public class ActionRunner {
         installRunning(action.reset());
     }
 
+    /**
+     * Advance all monitors and running actions using wall-clock time.
+     * Prefer {@link #update(long)} and feed a monotonic clock for deterministic,
+     * testable behavior.
+     */
     public void update() {
-        long nowMillis = System.currentTimeMillis();
+        update(System.currentTimeMillis());
+    }
 
+    /**
+     * Advance all monitors and running actions to timestamp {@code nowMillis}.
+     * Passing the same clock you feed to {@link Action#update(long)} keeps the
+     * whole robot loop deterministic.
+     */
+    public void update(long nowMillis) {
         // 1) run monitors first (they can cancel/override behaviors)
         for (int i = 0; i < monitors.size(); i++) {
             Action m = monitors.get(i);

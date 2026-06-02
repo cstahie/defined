@@ -1,0 +1,36 @@
+plugins {
+    id 'com.android.library'
+}
+
+ext.publishName = 'Defined FTC'
+ext.publishDescription = 'FTC SDK glue for the Defined action engine: Android logging bridge, gamepad helpers, and an action-driven OpMode base.'
+
+android {
+    namespace = 'com.teamundefined.defined.ftc'
+    compileSdk = 35
+
+    defaultConfig {
+        minSdk = 24
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    publishing {
+        singleVariant('release') {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
+}
+
+dependencies {
+    api project(':defined-core')
+
+    // The robot app already bundles the FTC SDK; depend on it without forcing a version.
+    compileOnly "org.firstinspires.ftc:RobotCore:${rootProject.ext.ftcSdkVersion}"
+}
+
+apply from: "$rootDir/gradle/publishing.gradle"

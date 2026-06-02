@@ -21,8 +21,8 @@ rootProject.name = "defined"
 
 // Pure-Java modules (build & test on any desktop, no Android toolchain needed)
 include ":defined-core"
-//include ":defined-examples"
+include ":defined-examples"
 
 // Android-library modules (require the Android SDK + FTC SDK)
-//include ":defined-ftc"
-//include ":defined-pedro"
+include ":defined-ftc"
+include ":defined-pedro"
