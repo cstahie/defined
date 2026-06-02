@@ -1,0 +1,77 @@
+// Shared Maven publishing configuration applied by every published module.
+//
+// Nothing here publishes automatically — it only *configures* the artifacts,
+// POM metadata, and signing so a release is a single `./gradlew publish` away
+// once credentials are provided. See docs/RELEASING.md.
+
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+// Module sets ext.publishName / ext.publishDescription before applying this file.
+def pubName = project.findProperty('publishName') ?: project.name
+def pubDesc = project.findProperty('publishDescription') ?: 'Defined — composable action engine for FTC'
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.findByName('release') ?: components.java
+
+                groupId = project.group
+                artifactId = project.name
+                version = project.version
+
+                pom {
+                    name = pubName
+                    description = pubDesc
+                    url = 'https://github.com/team-undefined/defined'
+                    licenses {
+                        license {
+                            name = 'MIT License'
+                            url = 'https://opensource.org/licenses/MIT'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = 'team-undefined'
+                            name = 'FTC Team 19112 — Undefined'
+                            url = 'https://teamundefined.com'
+                        }
+                    }
+                    scm {
+                        connection = 'scm:git:https://github.com/team-undefined/defined.git'
+                        developerConnection = 'scm:git:ssh://git@github.com/team-undefined/defined.git'
+                        url = 'https://github.com/team-undefined/defined'
+                    }
+                }
+            }
+        }
+        repositories {
+            // Local sanity-check target: ./gradlew publishAllPublicationsToLocalStagingRepository
+            maven {
+                name = 'localStaging'
+                url = layout.buildDirectory.dir('staging-repo')
+            }
+            // Maven Central via the Sonatype Central Portal (credentials supplied at release time).
+            maven {
+                name = 'central'
+                url = 'https://central.sonatype.com/api/v1/publisher/upload'
+                credentials {
+                    username = project.findProperty('centralUsername') ?: ''
+                    password = project.findProperty('centralPassword') ?: ''
+                }
+            }
+        }
+    }
+
+    // Sign only when a signing key is configured (keeps local/dev builds friction-free).
+    signing {
+        required { project.hasProperty('signingKey') }
+        if (project.hasProperty('signingKey')) {
+            useInMemoryPgpKeys(
+                    project.findProperty('signingKey'),
+                    project.findProperty('signingPassword') ?: '')
+            sign publishing.publications
+        }
+    }
+}

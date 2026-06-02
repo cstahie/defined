@@ -1,0 +1,28 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        // FTC SDK artifacts
+        maven { url = "https://maven.brott.dev/" }
+        // Pedro Pathing + Panels (bylazar)
+        maven { url = "https://mymaven.bylazar.com/releases" }
+    }
+}
+
+rootProject.name = "defined"
+
+// Pure-Java modules (build & test on any desktop, no Android toolchain needed)
+include ":defined-core"
+//include ":defined-examples"
+
+// Android-library modules (require the Android SDK + FTC SDK)
+//include ":defined-ftc"
+//include ":defined-pedro"

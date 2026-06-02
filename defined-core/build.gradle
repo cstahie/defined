@@ -1,0 +1,29 @@
+plugins {
+    id 'java-library'
+}
+
+ext.publishName = 'Defined Core'
+ext.publishDescription = 'Pure-Java composable action engine (state machine, runner, 30+ action types) for FTC robots.'
+
+java {
+    // FTC runs on Android; keep bytecode compatible with the Control Hub runtime.
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+    withJavadocJar()
+    withSourcesJar()
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.10.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+apply from: "$rootDir/gradle/publishing.gradle"
