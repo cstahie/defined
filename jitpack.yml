@@ -1,0 +1,12 @@
+# JitPack build configuration.
+# Lets any team consume Defined straight from a Git tag with zero published infra:
+#
+#   repositories { maven { url 'https://jitpack.io' } }
+#   implementation 'com.github.team-undefined.defined:defined-core:<tag>'
+#
+# JitPack runs `./gradlew :<module>:publishToMavenLocal` per requested artifact.
+jdk:
+  - openjdk17
+
+install:
+  - ./gradlew :defined-core:publishToMavenLocal :defined-ftc:publishToMavenLocal :defined-pedro:publishToMavenLocal -x test
