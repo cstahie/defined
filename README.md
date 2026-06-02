@@ -171,7 +171,7 @@ All 32 action types, each with a worked, **tested** example in
 | **Rate control** | `RateLimitAction`, `ThrottledAction` |
 | **Reliability & monitoring** | `WatchdogAction`, `CancelOnAction`, `ManualOverrideAction`, `RetryUntilConfidentAction`, `MetricAction` |
 | **Runner helpers** | `ActionRunner`, `ToggleStartGroupAction`, `WhilePressedAction` |
-| **Pedro** (`defined-pedro`) | `FollowPathAction`, `HeadingLockAction`, `ZoneMonitor` |
+| **Pedro** (`defined-pedro`) | `NavigationAction` (+ `Waypoint`), `FollowPathAction`, `HeadingLockAction`, `ZoneMonitor`, `PathUtils` |
 
 ---
 

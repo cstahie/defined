@@ -284,8 +284,34 @@ Run one action while a button is held and another when released.
 
 ## Pedro actions (`defined-pedro`)
 
+### `NavigationAction`
+The full‑featured "drive there" action: A→B (auto‑builds a `BezierLine`), pre‑built
+or deferred `PathChain`, optimized minimal‑strafe paths, joystick override, waypoint
+callbacks, and heading‑tolerant completion.
+```java
+// Simple A→B in autonomous:
+NavigationAction.forAuto(follower, new Pose(48, 36, Math.toRadians(90)))
+    .requiresDrive(Subsystem.DRIVE);
+
+// TeleOp with driver override + minimal‑strafe path:
+NavigationAction.optimizedWithOverride(follower, target, 0.3, 0.8,
+        () -> Math.hypot(gamepad1.left_stick_x, gamepad1.left_stick_y) > 0.1)
+    .requiresDrive(Subsystem.DRIVE);
+
+// Fire callbacks along the way:
+NavigationAction.forAuto(follower, target)
+    .withTriggers(Arrays.asList(
+        new NavigationAction.Waypoint(24, 36, t -> intake.setPower(1.0)),
+        new NavigationAction.Waypoint(48, 48, t -> intake.setPower(0.0))));
+```
+
+### `PathUtils`
+Helpers behind `NavigationAction`: `buildOptimizedPath(...)` (three‑segment,
+minimal‑strafe) and `detectOptimalDriveDirection(...)`.
+
 ### `FollowPathAction`
-Run a Pedro `PathChain` to completion as an action.
+A lighter alternative to `NavigationAction` when you just want to run a pre‑built
+`PathChain` to completion as an action.
 ```java
 FollowPathAction.follow("to_basket", follower, toBasket);
 ```
