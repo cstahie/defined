@@ -82,19 +82,21 @@ flowchart TB
     end
 ```
 
-Running prep **in parallel** is why cycle times drop — the same work finishes sooner:
+Running prep **in parallel** is why cycle times drop — the same work finishes sooner.
+Blocking code does it end‑to‑end (a long chain); Defined overlaps it (a short stack):
 
 ```mermaid
-gantt
-    title Same work, less time
-    dateFormat X
-    axisFormat %Ss
-    section Blocking code
-    spin up flywheel :0, 1500
-    drive to goal    :1500, 1500
-    section Defined (parallel)
-    spin up flywheel :0, 1500
-    drive to goal    :0, 1500
+flowchart LR
+    subgraph blk["❌ Blocking — 3.0 s total"]
+        direction LR
+        b1["spin up<br/>1.5 s"] --> b2["drive<br/>1.5 s"]
+    end
+    subgraph par["✅ Defined parallel — 1.5 s total"]
+        direction TB
+        p1["spin up · 1.5 s"]
+        p2["drive · 1.5 s"]
+    end
+    blk ~~~ par
 ```
 
 ### 3. Slots — many actions at once, without fighting 🔒
