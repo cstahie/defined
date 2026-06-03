@@ -8,13 +8,14 @@ import com.teamundefined.defined.examples.Subsystem;
 import java.util.function.DoubleSupplier;
 
 /**
- * Drive behaviors.
+ * Drive behaviors for the <b>desktop</b> demo.
  *
- * <p>{@link #driveTo} is a pure-Java stand-in for the real
- * {@code com.teamundefined.defined.pedro.NavigationAction} (which drives a Pedro
- * {@code Follower}). The shape is identical — issue the path once, complete when the
- * drive is no longer busy — so the example stays runnable on a laptop while teaching
- * the same pattern you'd use on the robot.
+ * <p><b>NOTE:</b> {@link #driveTo} is a pure-Java <i>stand-in</i> so this module can run
+ * on a laptop with no hardware. It is NOT how you drive a real robot. On an actual
+ * robot use the real {@code NavigationAction} from {@code defined-pedro} — see
+ * {@code defined-example-ftc}'s {@code DriveActions.navigateTo(...)}, which wraps
+ * {@code NavigationAction.forAuto(follower, pose)}. The action <i>shape</i> is identical
+ * (issue once, complete when the drive is no longer busy), which is the point.
  */
 public final class DriveActions {
     private DriveActions() {}

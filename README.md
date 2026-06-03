@@ -54,20 +54,25 @@ replaces that with declarative building blocks:
 | **`defined-core`** | The engine: `Action`, `Slot`, `ActionRunner`, 32 action types. Pure Java. | — |
 | **`defined-ftc`** | FTC glue: logcat bridge, action‑driven `OpMode` base. | FTC SDK |
 | **`defined-pedro`** | Pedro Pathing actions: follow a path, lock heading, monitor zones. | Pedro Pathing |
-| **`defined-examples`** | A fully simulated robot + runnable demo (desktop, no hardware). | core |
+| **`defined-example-ftc`** | **Realistic robot to copy** — real subsystems, `NavigationAction`, TeleOp + Auto. Compiles vs FTC SDK + Pedro. | core, ftc, pedro |
+| **`defined-examples`** | Hardware‑free **desktop** demo of the engine (runs + unit‑tested on a laptop). | core |
 
 ```mermaid
 graph TD
     core["defined-core<br/><i>pure Java engine</i>"]
     ftc["defined-ftc<br/><i>OpMode + logcat</i>"]
     pedro["defined-pedro<br/><i>path / heading / zones</i>"]
-    examples["defined-examples<br/><i>simulated robot</i>"]
+    exftc["defined-example-ftc<br/><i>realistic robot to copy</i>"]
+    examples["defined-examples<br/><i>desktop engine demo</i>"]
     sdk["FTC SDK"]
     pp["Pedro Pathing"]
 
     ftc --> core
     pedro --> core
     examples --> core
+    exftc --> core
+    exftc --> ftc
+    exftc --> pedro
     ftc -.compileOnly.-> sdk
     pedro -.compileOnly.-> pp
     pedro -.compileOnly.-> sdk

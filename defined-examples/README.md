@@ -1,9 +1,16 @@
-# defined-examples
+# defined-examples (desktop engine demo)
 
-A **complete, simulated robot** that shows teams how to structure a real TeamCode
-project with Defined — subsystems, per‑subsystem action factories, and an Auto + a
-TeleOp. It's pure Java, so it **runs and is tested on a laptop** (no hardware), yet
-the structure maps 1:1 onto a real FTC project.
+> **Looking for the realistic robot to copy?** See **[`defined-example-ftc`](../defined-example-ftc)** —
+> it mirrors real TeamCode (real subsystems, the actual `NavigationAction`, the
+> `ActionOpMode` lifecycle, TeleOp + Auto) and compiles against the FTC SDK + Pedro.
+>
+> **This** module is the hardware‑free version: a **simulated** robot so you can *run
+> and unit‑test the engine on a laptop*. Its `driveTo` is a desktop stand‑in for
+> `NavigationAction`. Use it to understand the engine + slot model; use
+> `defined-example-ftc` as the template for your robot.
+
+A simulated robot showing the same structure — subsystems, per‑subsystem action
+factories, and an Auto + a TeleOp — that **runs and is tested on a laptop** (no hardware).
 
 ```bash
 ./gradlew :defined-examples:run     # play a full simulated match (auto, then teleop)

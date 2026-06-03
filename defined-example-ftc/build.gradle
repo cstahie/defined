@@ -1,0 +1,32 @@
+plugins {
+    id 'com.android.library'
+}
+
+// A realistic FTC example that mirrors real TeamCode structure and uses the actual
+// NavigationAction. It is NOT published and NOT run on desktop — it exists to be read
+// and cloned, and we compile it in CI to guarantee the patterns stay correct.
+
+android {
+    namespace = 'com.teamundefined.defined.example'
+    compileSdk = 35
+
+    defaultConfig {
+        minSdk = 24
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation project(':defined-core')
+    implementation project(':defined-ftc')
+    implementation project(':defined-pedro')
+
+    // The robot app already bundles these; depend without forcing versions.
+    compileOnly "org.firstinspires.ftc:RobotCore:${rootProject.ext.ftcSdkVersion}"
+    compileOnly "org.firstinspires.ftc:Hardware:${rootProject.ext.ftcSdkVersion}"
+    compileOnly "com.pedropathing:ftc:${rootProject.ext.pedroVersion}"
+}

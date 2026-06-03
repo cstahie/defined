@@ -26,3 +26,8 @@ include ":defined-examples"
 // Android-library modules (require the Android SDK + FTC SDK)
 include ":defined-ftc"
 include ":defined-pedro"
+
+// Realistic FTC example: a full robot mirroring real TeamCode structure
+// (subsystems + *Actions + NavigationAction + TeleOp/Auto). Compiles against the
+// FTC SDK + Pedro; meant to be read & cloned, not run on desktop.
+include ":defined-example-ftc"
