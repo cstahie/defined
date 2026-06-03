@@ -47,6 +47,112 @@ replaces that with declarative building blocks:
 
 ---
 
+## How it all runs — from one action to a whole robot
+
+Defined's superpower: your robot does **many things at once, safely, in a single fast
+loop** — no threads, no `sleep()`. Here's the intuition, simple → advanced.
+
+### 1. Every action is a non‑blocking *slice*
+
+An `Action` never blocks. Each loop it does one tiny slice of work and reports its
+state. Your `loop()` stays well under 10 ms.
+
+```mermaid
+flowchart LR
+    L["Robot loop()<br/>~every 20 ms"] --> U["action.update(now)"]
+    U --> Q{"done?"}
+    Q -- "no" --> R["do one tiny slice<br/>→ RUNNING"]
+    Q -- "yes" --> D["→ COMPLETE"]
+    R --> L
+```
+
+### 2. Compose them — in order, or at the same time
+
+```mermaid
+flowchart TB
+    subgraph seq["SequentialAction — one after another"]
+        direction LR
+        s1["spin up"] --> s2["drive"] --> s3["fire"]
+    end
+    subgraph par["ParallelAction.all — together"]
+        direction LR
+        p1["spin up"]
+        p2["drive"]
+        p3["aim"]
+    end
+```
+
+Running prep **in parallel** is why cycle times drop — the same work finishes sooner:
+
+```mermaid
+gantt
+    title Same work, less time
+    dateFormat X
+    axisFormat %Ss
+    section Blocking code
+    spin up flywheel :0, 1500
+    drive to goal    :1500, 1500
+    section Defined (parallel)
+    spin up flywheel :0, 1500
+    drive to goal    :0, 1500
+```
+
+### 3. Slots — many actions at once, without fighting 🔒
+
+This is the magic. Each action **reserves** the subsystems it needs with
+`.requires(...)`. The `ActionRunner` guarantees only one action holds a slot at a
+time, so **independent subsystems advance in parallel every loop**, and conflicts are
+resolved deterministically — the loser is cancelled, the newest request is queued.
+No two actions ever command the same motor.
+
+```mermaid
+flowchart LR
+    subgraph tick["One loop tick — all of these advance together"]
+        d["driveControl"] --> DRIVE(("DRIVE"))
+        i["intake group"] --> INTAKE(("INTAKE"))
+        s["shoot group"] --> FLY(("FLYWHEEL"))
+        s --> IDX(("INDEXER"))
+        a["aim"] --> TUR(("TURRET"))
+    end
+    req["new shoot request<br/>also wants FLYWHEEL"] -.->|"slot busy → cancel old, queue new"| FLY
+```
+
+### 4. The whole robot = many little state machines, in parallel
+
+Because each slot carries at most one action, the runner is effectively advancing
+**several independent state machines on the same tick** — that's "multi‑state in
+parallel" with zero threads:
+
+```mermaid
+stateDiagram-v2
+    state Runner {
+        direction LR
+        [*] --> Driving
+        Driving --> HoldingPose
+        --
+        [*] --> SpinningUp
+        SpinningUp --> Firing
+        Firing --> FlywheelIdle
+        --
+        [*] --> Tracking
+        Tracking --> Locked
+    }
+```
+
+### Why this is the coolest FTC library 😎
+
+- **Truly concurrent, single‑threaded.** Drive, intake, aim, and shoot all progress
+  every loop — but it's one thread, so it's deterministic and Control‑Hub‑safe.
+- **Slot reservations = no conflicts, ever.** The runner is the referee; two actions
+  can't grab the same subsystem, and contention resolves predictably.
+- **Composable.** Sequence, parallelize, race, retry, guard, debounce — nest freely.
+- **Deterministic & testable.** Time is injected, so the whole engine unit‑tests on a
+  laptop (80 tests here, no hardware).
+- **One playbook for TeleOp *and* Auto.** The same actions run in both.
+- **Tiny & free.** Pure‑Java core, zero overhead until you log.
+
+---
+
 ## Modules
 
 | Artifact | What it is | Depends on |
