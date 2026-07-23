@@ -27,4 +27,10 @@ public final class ExampleConfig {
 
     /** Master telemetry switch — turn off for competition to save loop time. */
     public static boolean telemetryOn = true;
+
+    /**
+     * Section profiling. Read once when ExampleRobot is constructed, so flip it in the menu
+     * before START (a SectionProfiler decides at construction whether to measure at all).
+     */
+    public static boolean profilerOn = true;
 }
