@@ -22,20 +22,24 @@ Maven site. If a test fails, nothing is released.
 
 ## One-time GitHub setup
 
-1. Create a **public** GitHub repo and push this project to it:
-   ```bash
-   git remote add origin https://github.com/<org>/<repo>.git
-   git push -u origin <branch>
-   ```
-2. Run `./release.sh 0.1.0` once (it creates the `gh-pages` branch for you).
-3. On GitHub: **Settings → Pages → Build from branch → `gh-pages` / root**.
-4. Wait ~1 minute. Your Maven site is live at `https://<org>.github.io/<repo>/`.
+The repo must be **public** — GitHub Pages from a private repo needs a paid plan,
+and the published site is world-readable either way, so there's nothing to gain by
+keeping it closed.
+
+1. Push this project to GitHub (already done: `git@github.com:cstahie/defined.git`).
+2. Make the repo public: **Settings → General → Change visibility → Public**.
+3. Run `./release.sh 0.1.0` once (it creates the `gh-pages` branch for you).
+4. On GitHub: **Settings → Pages → Build from branch → `gh-pages` / root**.
+5. Wait ~1 minute. The Maven site is live at `https://cstahie.github.io/defined/`.
+
+> Steps 3 and 4 are in that order on purpose — the Pages settings page won't let you
+> pick `gh-pages` until the branch exists.
 
 ## How other teams use it
 
 ```gradle
 repositories {
-    maven { url 'https://<org>.github.io/<repo>' }
+    maven { url 'https://cstahie.github.io/defined' }
 }
 dependencies {
     implementation 'com.teamundefined:defined-core:0.2.0'

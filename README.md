@@ -83,20 +83,14 @@ flowchart TB
 ```
 
 Running prep **in parallel** is why cycle times drop — the same work finishes sooner.
-Blocking code does it end‑to‑end (a long chain); Defined overlaps it (a short stack):
+Blocking code runs spin‑up *then* drive; Defined overlaps them (note the boxes stacked
+in the **same** time slot):
 
-```mermaid
-flowchart LR
-    subgraph blk["❌ Blocking — 3.0 s total"]
-        direction LR
-        b1["spin up<br/>1.5 s"] --> b2["drive<br/>1.5 s"]
-    end
-    subgraph par["✅ Defined parallel — 1.5 s total"]
-        direction TB
-        p1["spin up · 1.5 s"]
-        p2["drive · 1.5 s"]
-    end
-    blk ~~~ par
+```text
+                  0s            1.5s           3.0s
+  Blocking code   [  spin up  ][   drive   ]          ⟶ 3.0 s
+  Defined  (∥)    [  spin up  ]                        ⟶ 1.5 s
+                  [   drive   ]
 ```
 
 ### 3. Slots — many actions at once, without fighting 🔒
@@ -292,19 +286,32 @@ flowchart LR
 
 ## Install
 
-> Not yet published publicly. Once the first release is cut (one command:
-> `./release.sh 0.1.0`), teams consume it from our GitHub Pages Maven repo:
+Add our GitHub Pages Maven repo to your TeamCode `build.gradle`:
 
 ```gradle
 repositories {
-    maven { url 'https://<org>.github.io/<repo>' }
+    maven { url 'https://cstahie.github.io/defined' }
 }
 dependencies {
-    implementation "com.teamundefined:defined-core:<version>"
-    implementation "com.teamundefined:defined-ftc:<version>"     // optional FTC glue
-    implementation "com.teamundefined:defined-pedro:<version>"   // optional Pedro actions
+    implementation "com.teamundefined:defined-core:0.1.0"
+    implementation "com.teamundefined:defined-ftc:0.1.0"     // optional FTC glue
+    implementation "com.teamundefined:defined-pedro:0.1.0"   // optional Pedro actions
 }
 ```
+
+`defined-core` is pure Java and has no FTC dependency — the `-ftc` and `-pedro`
+modules are the glue you only need if you use them.
+
+<details>
+<summary>Prefer JitPack? (builds straight from a Git tag)</summary>
+
+```gradle
+repositories { maven { url 'https://jitpack.io' } }
+dependencies {
+    implementation 'com.github.cstahie.defined:defined-core:v0.1.0'
+}
+```
+</details>
 
 Releasing is one student-friendly command — see [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md).
 For the (optional) Maven Central path, see [docs/RELEASING.md](docs/RELEASING.md).

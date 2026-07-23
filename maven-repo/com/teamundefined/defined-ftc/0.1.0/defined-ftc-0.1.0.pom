@@ -13,7 +13,7 @@
   <packaging>aar</packaging>
   <name>Defined FTC</name>
   <description>FTC SDK glue for the Defined action engine: Android logging bridge, gamepad helpers, and an action-driven OpMode base.</description>
-  <url>https://github.com/team-undefined/defined</url>
+  <url>https://github.com/cstahie/defined</url>
   <licenses>
     <license>
       <name>MIT License</name>
@@ -28,9 +28,9 @@
     </developer>
   </developers>
   <scm>
-    <connection>scm:git:https://github.com/team-undefined/defined.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/team-undefined/defined.git</developerConnection>
-    <url>https://github.com/team-undefined/defined</url>
+    <connection>scm:git:https://github.com/cstahie/defined.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/cstahie/defined.git</developerConnection>
+    <url>https://github.com/cstahie/defined</url>
   </scm>
   <dependencies>
     <dependency>

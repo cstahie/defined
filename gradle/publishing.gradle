@@ -24,7 +24,7 @@ afterEvaluate {
                 pom {
                     name = pubName
                     description = pubDesc
-                    url = 'https://github.com/team-undefined/defined'
+                    url = 'https://github.com/cstahie/defined'
                     licenses {
                         license {
                             name = 'MIT License'
@@ -39,9 +39,9 @@ afterEvaluate {
                         }
                     }
                     scm {
-                        connection = 'scm:git:https://github.com/team-undefined/defined.git'
-                        developerConnection = 'scm:git:ssh://git@github.com/team-undefined/defined.git'
-                        url = 'https://github.com/team-undefined/defined'
+                        connection = 'scm:git:https://github.com/cstahie/defined.git'
+                        developerConnection = 'scm:git:ssh://git@github.com/cstahie/defined.git'
+                        url = 'https://github.com/cstahie/defined'
                     }
                 }
             }

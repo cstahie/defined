@@ -1,8 +1,9 @@
 # Releasing Defined
 
-> **Status: prepared, not published.** Everything below is wired up and verified
-> locally. The library ships when the team decides it's ready — nothing is uploaded
-> to any public repository yet.
+> **Scope: the Maven Central path.** Day-to-day releases go out through our GitHub
+> Pages Maven repo via `./release.sh` — see [SELF_HOSTING.md](SELF_HOSTING.md).
+> This doc covers the optional Central publish, which is **not yet set up**
+> (no namespace verification, no signing key).
 
 ## How comparable FTC libraries distribute
 
@@ -27,18 +28,24 @@ same experience with **two** ready paths:
 - Each module publishes **main + sources + javadoc + POM** with full license / SCM /
   developer metadata.
 - Coordinates: `com.teamundefined:defined-core | defined-ftc | defined-pedro`.
-- A **local staging** repository for dry runs.
 - Signing only activates when a key is present, so dev builds stay friction‑free.
 
-### Verify the artifacts locally (safe, publishes nothing)
+> Note: `gradle/publishing.gradle` currently defines **one** target repository —
+> `pages` (the local `maven-repo/` folder). A `central` repository block still has to
+> be added there before the Central steps below will work.
+
+### Verify the artifacts locally (safe, uploads nothing)
 
 ```bash
-./gradlew publishReleasePublicationToLocalStagingRepository
-# inspect: defined-*/build/staging-repo/com/teamundefined/...
+./gradlew publishToMavenLocal
+# inspect: ~/.m2/repository/com/teamundefined/...
 ```
 
 ## Cutting a Maven Central release (when ready)
 
+0. **Add a `central` repository** to `gradle/publishing.gradle`'s `repositories { }`
+   block, pointing at the Central Portal upload endpoint and reading
+   `centralUsername` / `centralPassword`.
 1. **Own the namespace.** Verify `com.teamundefined` on the
    [Sonatype Central Portal](https://central.sonatype.com) using the
    `teamundefined.com` domain (DNS TXT record). The group ID matches the domain you
@@ -71,7 +78,7 @@ JitPack builds each module from a Git tag on demand. Consumers add:
 ```gradle
 repositories { maven { url 'https://jitpack.io' } }
 dependencies {
-    implementation 'com.github.team-undefined.defined:defined-core:v1.0.0'
+    implementation 'com.github.cstahie.defined:defined-core:v1.0.0'
 }
 ```
 
