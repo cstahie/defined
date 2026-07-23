@@ -33,8 +33,10 @@ public class HeadingLockAction extends Action {
     private final DoubleSupplier rightStickY;
     private final BooleanSupplier leftStickActive;
     private final BooleanSupplier enabled;
-    private final double deadband;
-    private final boolean snapTo45;
+    // Suppliers, not values: these are typically live dashboard knobs, so they must be
+    // read every tick rather than captured when the action is built.
+    private final DoubleSupplier deadband;
+    private final BooleanSupplier snapTo45;
 
     private boolean isLocking = false;
     private double targetHeading = 0;
@@ -74,9 +76,9 @@ public class HeadingLockAction extends Action {
             return;
         }
 
-        if (magnitude > deadband) {
+        if (magnitude > deadband.getAsDouble()) {
             double joystickAngle = Math.atan2(rx, ry); // up = 0, right = +90°
-            if (snapTo45) joystickAngle = snapTo45Degrees(joystickAngle);
+            if (snapTo45.getAsBoolean()) joystickAngle = snapTo45Degrees(joystickAngle);
 
             double angleDiff = Math.abs(normalizeAngle(joystickAngle - targetHeading));
             if (!isLocking || angleDiff > Math.toRadians(10)) {
@@ -116,8 +118,8 @@ public class HeadingLockAction extends Action {
         private DoubleSupplier rightStickY = () -> 0;
         private BooleanSupplier leftStickActive = () -> false;
         private BooleanSupplier enabled = null;
-        private double deadband = 0.1;
-        private boolean snapTo45 = false;
+        private DoubleSupplier deadband = () -> 0.1;
+        private BooleanSupplier snapTo45 = () -> false;
 
         public Builder(Follower follower) { this.follower = follower; }
 
@@ -126,8 +128,15 @@ public class HeadingLockAction extends Action {
         }
         public Builder leftStickActive(BooleanSupplier s) { this.leftStickActive = s; return this; }
         public Builder enabledWhen(BooleanSupplier s) { this.enabled = s; return this; }
-        public Builder deadband(double d) { this.deadband = d; return this; }
-        public Builder snapTo45(boolean s) { this.snapTo45 = s; return this; }
+
+        public Builder deadband(double d) { this.deadband = () -> d; return this; }
+        public Builder snapTo45(boolean s) { this.snapTo45 = () -> s; return this; }
+
+        /** Deadband read every tick — use for a live-tunable dashboard value. */
+        public Builder deadband(DoubleSupplier d) { if (d != null) this.deadband = d; return this; }
+
+        /** 45° snapping read every tick — use for a live-tunable dashboard toggle. */
+        public Builder snapTo45(BooleanSupplier s) { if (s != null) this.snapTo45 = s; return this; }
 
         public HeadingLockAction build() { return new HeadingLockAction(this); }
     }
