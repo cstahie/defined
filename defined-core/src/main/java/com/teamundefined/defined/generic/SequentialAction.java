@@ -55,6 +55,13 @@ public class SequentialAction extends Action {
                         " (" + current.name + ")");
                 return;
             }
+            if (currentState == ActionState.CANCELED) {
+                // Propagate cancellation. Without this branch a CANCELED child is ticked
+                // forever and the sequence never reaches a terminal state (deadlock).
+                super.endActionWithCancel("Sequential action canceled at step " + currentIndex +
+                        " (" + current.name + "): " + current.getErrorMessage());
+                return;
+            }
         };
 
         // Set completion check

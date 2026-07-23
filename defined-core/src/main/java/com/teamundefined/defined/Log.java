@@ -46,6 +46,17 @@ public final class Log {
      */
     public static volatile Sink sink = null;
 
+    /**
+     * Verbosity gate for {@link #i(String, int, Supplier)}. A call whose {@code level}
+     * argument exceeds this value is dropped <em>before</em> the message supplier runs,
+     * so noisy per-loop logging costs nothing but the comparison.
+     *
+     * <p>Defaults to {@code 1} (only the least-verbose call sites). Raise it while
+     * debugging. This matters on an FTC Control Hub, where the action engine logs on
+     * every state change inside a ~100 Hz loop.
+     */
+    public static volatile int verbosity = 1;
+
     private Log() {}
 
     public static void d(String tag, String msg) { emit(DEBUG, tag, msg); }
@@ -53,15 +64,20 @@ public final class Log {
     public static void w(String tag, String msg) { emit(WARN, tag, msg); }
     public static void e(String tag, String msg) { emit(ERROR, tag, msg); }
 
-    /** Lazy variant — {@code msg} is only evaluated when a sink is installed. */
+    /** Lazy variants — {@code msg} is only evaluated when a sink is installed. */
+    public static void d(String tag, Supplier<String> msg) { emit(DEBUG, tag, msg); }
     public static void i(String tag, Supplier<String> msg) { emit(INFO, tag, msg); }
+    public static void w(String tag, Supplier<String> msg) { emit(WARN, tag, msg); }
+    public static void e(String tag, Supplier<String> msg) { emit(ERROR, tag, msg); }
 
     /**
-     * Lazy variant with a throttle hint (kept for API compatibility with the
-     * original {@code ULog.i(tag, n, supplier)} call sites). The {@code everyN}
-     * hint is advisory and currently ignored by the facade; sinks may honor it.
+     * Lazy variant gated on {@link #verbosity}: the message is dropped, and its supplier
+     * never evaluated, when {@code level > verbosity}. Higher {@code level} means noisier.
      */
-    public static void i(String tag, int everyN, Supplier<String> msg) { emit(INFO, tag, msg); }
+    public static void i(String tag, int level, Supplier<String> msg) {
+        if (level > verbosity) return;
+        emit(INFO, tag, msg);
+    }
 
     private static void emit(int level, String tag, String msg) {
         Sink s = sink;

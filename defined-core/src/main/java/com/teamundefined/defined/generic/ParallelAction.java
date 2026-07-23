@@ -72,6 +72,7 @@ public class ParallelAction extends Action {
         Action firstError = null;
         Action firstTimeout = null;
         Action firstComplete = null;
+        Action firstCanceled = null;
 
         boolean allTerminal = true;
 
@@ -81,6 +82,7 @@ public class ParallelAction extends Action {
             if (firstError == null && a.getState() == ActionState.ERROR) firstError = a;
             if (firstTimeout == null && a.getState() == ActionState.TIMEOUT) firstTimeout = a;
             if (firstComplete == null && a.getState() == ActionState.COMPLETE) firstComplete = a;
+            if (firstCanceled == null && a.getState() == ActionState.CANCELED) firstCanceled = a;
         }
 
         // 3) Mode behavior
@@ -92,6 +94,10 @@ public class ParallelAction extends Action {
             }
             if (firstTimeout != null) {
                 endActionWithTimeout("Parallel timed out due to " + firstTimeout.name);
+                return;
+            }
+            if (firstCanceled != null) {
+                endActionWithCancel("Parallel canceled due to " + firstCanceled.name + ": " + firstCanceled.getErrorMessage());
                 return;
             }
 
@@ -126,8 +132,9 @@ public class ParallelAction extends Action {
                     endActionWithTimeout("Parallel(ANY) finished with no winner; timeout in " + firstTimeout.name);
                     return;
                 }
-                // all terminal but no complete/error/timeout? unlikely; treat as complete
-                endAction(ActionState.COMPLETE);
+                // all terminal with no complete/error/timeout means every child was canceled
+                endActionWithCancel("Parallel(ANY) finished with no winner; canceled" +
+                        (firstCanceled != null ? " in " + firstCanceled.name : ""));
             }
             return;
         }
@@ -140,6 +147,11 @@ public class ParallelAction extends Action {
             }
             if (firstTimeout != null) {
                 endActionWithTimeout("Parallel(ALL) timeout in " + firstTimeout.name);
+                return;
+            }
+            if (firstCanceled != null) {
+                // A canceled child must not read as success - the work it owned never finished.
+                endActionWithCancel("Parallel(ALL) canceled in " + firstCanceled.name + ": " + firstCanceled.getErrorMessage());
                 return;
             }
             endAction(ActionState.COMPLETE);
