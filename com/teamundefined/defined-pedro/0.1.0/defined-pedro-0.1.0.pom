@@ -13,7 +13,7 @@
   <packaging>aar</packaging>
   <name>Defined Pedro</name>
   <description>Pedro Pathing actions for the Defined engine: follow a path, lock heading, and monitor field zones — all composable as Defined actions.</description>
-  <url>https://github.com/team-undefined/defined</url>
+  <url>https://github.com/cstahie/defined</url>
   <licenses>
     <license>
       <name>MIT License</name>
@@ -28,9 +28,9 @@
     </developer>
   </developers>
   <scm>
-    <connection>scm:git:https://github.com/team-undefined/defined.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/team-undefined/defined.git</developerConnection>
-    <url>https://github.com/team-undefined/defined</url>
+    <connection>scm:git:https://github.com/cstahie/defined.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/cstahie/defined.git</developerConnection>
+    <url>https://github.com/cstahie/defined</url>
   </scm>
   <dependencies>
     <dependency>
