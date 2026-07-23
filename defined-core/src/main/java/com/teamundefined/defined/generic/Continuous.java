@@ -95,4 +95,28 @@ public class Continuous extends Action {
     public static Continuous whileTrue(String name, BooleanSupplier whileCondition, LongConsumer delegate) {
         return new Continuous(name, () -> !whileCondition.getAsBoolean(), delegate);
     }
+
+    /**
+     * A never-ending monitor that runs {@code step} on every tick where {@code condition}
+     * holds. This is the workhorse for gamepad and sensor monitors:
+     *
+     * <pre>{@code
+     * runner.addMonitor(Continuous.monitor("reset_pose",
+     *         () -> gamepad1.options, now -> robot.resetPose()));
+     * }</pre>
+     *
+     * <p>Note this is <b>level</b>-triggered, not edge-triggered: hold the button and
+     * {@code step} runs every loop. Wrap the condition in an
+     * {@link EdgeTriggerAction}, or use {@link DebounceAction}, when you want
+     * once-per-press semantics instead.
+     *
+     * <p>The action never completes — add it as a monitor, not as a slot action.
+     */
+    public static Continuous monitor(String name, BooleanSupplier condition, LongConsumer step) {
+        return Continuous.forever(name + "_monitor", now -> {
+            if (condition.getAsBoolean()) {
+                step.accept(now);
+            }
+        });
+    }
 }

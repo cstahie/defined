@@ -3,19 +3,30 @@ package com.teamundefined.defined;
 import java.util.function.Supplier;
 
 /**
- * Zero-overhead, pluggable logging facade for the Defined action engine.
+ * Pluggable logging facade for the Defined action engine — <b>works out of the box</b>.
  *
- * <p>The core library is pure Java and has no dependency on Android's
- * {@code android.util.Log}. By default this facade does <b>nothing</b> (the
- * {@link #sink} is {@code null}), so logging adds no measurable cost to the
- * robot loop — important on the resource-constrained REV Control Hub.
+ * <p>You do not have to configure anything. On a robot, this auto-detects
+ * {@code android.util.Log} the first time something is logged and forwards to it, so
+ * library messages show up in {@code adb logcat} with no setup. On desktop (unit tests,
+ * MeepMeep) there is no Android class to find, so logging stays silent and free.
  *
- * <p>To see logs, install a {@link Sink}. The {@code defined-ftc} module ships
- * an Android sink that forwards to {@code android.util.Log}; on desktop you can
- * install a {@code System.out} sink:
+ * <p>The core library itself is pure Java and does not link against Android — the
+ * detection is reflective and happens exactly once.
+ *
+ * <h2>Controlling the noise</h2>
+ * <ul>
+ *   <li>{@link #verbosity} gates the {@code i(tag, level, supplier)} calls used on hot
+ *       paths. It defaults to {@code 1}, which drops the engine's per-state-change
+ *       logging; raise it while debugging.</li>
+ *   <li>{@link #disable()} turns logging off entirely.</li>
+ *   <li>Assign {@link #sink} to route somewhere else — a file, telemetry, or your own
+ *       gating logic. An explicit sink always wins over auto-detection.</li>
+ * </ul>
  *
  * <pre>{@code
- * Log.sink = (level, tag, msg) -> System.out.println(tag + ": " + msg);
+ * Log.verbosity = 30;                                  // see engine state transitions
+ * Log.disable();                                       // silence everything
+ * Log.sink = (lvl, tag, msg) -> System.out.println(tag + ": " + msg);   // custom
  * }</pre>
  *
  * <p>The static method names mirror {@code android.util.Log} ({@code d/i/w/e})
@@ -40,11 +51,71 @@ public final class Log {
     public static final int ERROR = 6;
 
     /**
-     * The active sink. {@code null} (the default) means logging is disabled and
-     * message suppliers are never evaluated, so there is no allocation or
-     * string-building cost.
+     * The active sink. When {@code null} (the default) the facade falls back to an
+     * auto-detected {@code android.util.Log} sink, so logging works with no setup on a
+     * robot and stays silent off one. Assign a sink to take full control, or call
+     * {@link #disable()} to switch logging off.
      */
     public static volatile Sink sink = null;
+
+    /** Auto-detected fallback, resolved at most once. */
+    private static volatile Sink autoSink = null;
+    private static volatile boolean autoResolved = false;
+
+    /** A sink that discards everything — used by {@link #disable()}. */
+    public static final Sink NO_OP = (level, tag, msg) -> {};
+
+    /** Turns logging off entirely, including the auto-detected Android sink. */
+    public static void disable() {
+        sink = NO_OP;
+    }
+
+    /** Restores the default behavior (auto-detect {@code android.util.Log}). */
+    public static void useAutoDetect() {
+        sink = null;
+    }
+
+    /**
+     * The sink to log through: an explicitly installed one, else the auto-detected
+     * Android one, else {@code null} (nothing installed and not on Android).
+     */
+    private static Sink activeSink() {
+        Sink s = sink;
+        if (s != null) return s;
+        if (!autoResolved) {
+            autoResolved = true;      // set first: a failed lookup must not retry every call
+            autoSink = detectAndroidSink();
+        }
+        return autoSink;
+    }
+
+    /**
+     * Reflectively binds {@code android.util.Log}. Returns {@code null} off Android, which
+     * is the desired outcome for desktop tests — nothing to configure, nothing printed.
+     */
+    private static Sink detectAndroidSink() {
+        try {
+            Class<?> androidLog = Class.forName("android.util.Log");
+            final java.lang.reflect.Method d = androidLog.getMethod("d", String.class, String.class);
+            final java.lang.reflect.Method i = androidLog.getMethod("i", String.class, String.class);
+            final java.lang.reflect.Method w = androidLog.getMethod("w", String.class, String.class);
+            final java.lang.reflect.Method e = androidLog.getMethod("e", String.class, String.class);
+            return (level, tag, msg) -> {
+                try {
+                    switch (level) {
+                        case DEBUG: d.invoke(null, tag, msg); break;
+                        case WARN:  w.invoke(null, tag, msg); break;
+                        case ERROR: e.invoke(null, tag, msg); break;
+                        default:    i.invoke(null, tag, msg); break;
+                    }
+                } catch (Throwable ignored) {
+                    // Logging must never take the robot down.
+                }
+            };
+        } catch (Throwable notAndroid) {
+            return null;
+        }
+    }
 
     /**
      * Verbosity gate for {@link #i(String, int, Supplier)}. A call whose {@code level}
@@ -80,12 +151,14 @@ public final class Log {
     }
 
     private static void emit(int level, String tag, String msg) {
-        Sink s = sink;
+        Sink s = activeSink();
         if (s != null) s.log(level, tag, msg);
     }
 
     private static void emit(int level, String tag, Supplier<String> msg) {
-        Sink s = sink;
+        Sink s = activeSink();
+        // Note the ordering: no sink means the supplier is never invoked, so an expensive
+        // message costs nothing when logging is off.
         if (s != null && msg != null) s.log(level, tag, msg.get());
     }
 }

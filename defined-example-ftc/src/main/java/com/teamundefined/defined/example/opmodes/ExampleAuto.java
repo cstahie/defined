@@ -2,26 +2,29 @@ package com.teamundefined.defined.example.opmodes;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-import com.teamundefined.defined.ftc.ActionOpMode;
-import com.teamundefined.defined.ftc.AndroidLog;
+import com.teamundefined.defined.ftc.RobotOpMode;
 import com.teamundefined.defined.example.ExampleRobot;
 import com.teamundefined.defined.example.Poses;
 import com.teamundefined.defined.example.actions.AutonomyActions;
 
 /**
- * Example AUTONOMOUS, structured like a real one: build the robot, set the start pose,
- * then on {@code start()} kick off the composed routine through the same
- * {@code ActionRunner} used in TeleOp.
+ * Example AUTONOMOUS, structured like a real one: set the start pose, then on
+ * {@code start()} kick off the composed routine through the same {@code ActionRunner}
+ * used in TeleOp.
+ *
+ * <p>There is no {@code onLoop} at all — {@link RobotOpMode} already ticks the robot and the
+ * runner every cycle, and in autonomous the actions do the rest.
  */
 @Autonomous(name = "Example Auto", group = "defined")
-public class ExampleAuto extends ActionOpMode {
-
-    private ExampleRobot robot;
+public class ExampleAuto extends RobotOpMode<ExampleRobot> {
 
     @Override
-    protected void onInit() {
-        AndroidLog.install();
-        robot = new ExampleRobot(hardwareMap);
+    protected ExampleRobot createRobot() {
+        return new ExampleRobot(hardwareMap);
+    }
+
+    @Override
+    protected void onRobotInit() {
         robot.drive.setStartingPose(Poses.START);
     }
 
@@ -32,8 +35,4 @@ public class ExampleAuto extends ActionOpMode {
         runner.startGroup(AutonomyActions.autonomousRoutine(robot));
     }
 
-    @Override
-    protected void onLoop(long nowMs) {
-        robot.update(); // Pedro needs drive.update() every loop to follow paths
-    }
 }
