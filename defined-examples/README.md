@@ -81,9 +81,13 @@ flowchart TD
 
 1. Replace each `subsystems/*` class with your real hardware (`DcMotor`, `Servo`, …).
 2. Keep the `actions/*` factories almost as‑is — they're already Defined actions.
-3. Make `DummyTeleOp`/`DummyAuto` extend the FTC SDK (`OpMode`, or
-   `ActionOpMode` from [`defined-ftc`](../defined-ftc)) and feed real `gamepad1.*`.
+3. Make `DummyRobot` extend `Robot` from [`defined-ftc`](../defined-ftc), and make
+   `DummyTeleOp`/`DummyAuto` extend `RobotOpMode<YourRobot>`. The base then owns
+   `init`/`loop`/`stop`, the pre‑start menu and telemetry — you fill in `createRobot`,
+   `onRobotInit` and `onLoop`.
 4. Swap `DriveActions.driveTo` for the Pedro `NavigationAction` from
    [`defined-pedro`](../defined-pedro).
 
-The action structure — and the slot safety — stays identical.
+The action structure — and the slot safety — stays identical. See
+[`defined-example-ftc`](../defined-example-ftc) for exactly this shape wired to real
+hardware, with every base class and utility in place.

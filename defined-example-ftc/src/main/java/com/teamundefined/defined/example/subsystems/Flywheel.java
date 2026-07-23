@@ -3,6 +3,7 @@ package com.teamundefined.defined.example.subsystems;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 
 /**
  * Dual-motor flywheel with an angle servo. Uses the motors' built-in velocity
@@ -38,6 +39,14 @@ public class Flywheel {
         targetVelocity = 0;
         motor1.setVelocity(0);
         motor2.setVelocity(0);
+    }
+
+    /**
+     * Combined current draw of both motors. This is a real USB round-trip, so sample it on a
+     * schedule rather than every loop — see the HardwareScheduler in ExampleRobot.
+     */
+    public double getCurrentAmps() {
+        return motor1.getCurrent(CurrentUnit.AMPS) + motor2.getCurrent(CurrentUnit.AMPS);
     }
 
     /** Push the target to the motors each loop (their PIDF does the rest). */

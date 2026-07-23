@@ -2,7 +2,7 @@
 
 **From _Undefined_ to _Defined_** — a tiny, non‑blocking action engine for FTC robots.
 
-[![tests](https://img.shields.io/badge/tests-80%20passing-brightgreen)]()
+[![tests](https://img.shields.io/badge/tests-93%20passing-brightgreen)]()
 [![license](https://img.shields.io/badge/license-MIT-blue)]()
 [![FTC](https://img.shields.io/badge/FTC-DECODE%202025--26-orange)]()
 
@@ -83,14 +83,20 @@ flowchart TB
 ```
 
 Running prep **in parallel** is why cycle times drop — the same work finishes sooner.
-Blocking code runs spin‑up *then* drive; Defined overlaps them (note the boxes stacked
-in the **same** time slot):
+Blocking code runs spin‑up *then* drive; Defined overlaps them. Note the two bars in the
+second row start at the **same** moment:
 
-```text
-                  0s            1.5s           3.0s
-  Blocking code   [  spin up  ][   drive   ]          ⟶ 3.0 s
-  Defined  (∥)    [  spin up  ]                        ⟶ 1.5 s
-                  [   drive   ]
+```mermaid
+gantt
+    title Same work, half the wall-clock time
+    dateFormat x
+    axisFormat %S s
+    section Blocking code
+    spin up      :done, b1, 0, 1500
+    drive        :done, b2, 1500, 3000
+    section Defined (parallel)
+    spin up      :active, d1, 0, 1500
+    drive        :active, d2, 0, 1500
 ```
 
 ### 3. Slots — many actions at once, without fighting 🔒
@@ -111,6 +117,13 @@ flowchart LR
         a["aim"] --> TUR(("TURRET"))
     end
     req["new shoot request<br/>also wants FLYWHEEL"] -.->|"slot busy → cancel old, queue new"| FLY
+
+    %% The incumbent shoot group (red) is the loser; the incoming request (green) wins.
+    style s stroke:#d32f2f,stroke-width:2px
+    style req stroke:#2e7d32,stroke-width:2px
+    %% Link order: 0 drive, 1 intake, 2 shoot→FLYWHEEL, 3 shoot→INDEXER, 4 aim, 5 request
+    linkStyle 2,3 stroke:#d32f2f,stroke-width:2px
+    linkStyle 5 stroke:#2e7d32,stroke-width:2px
 ```
 
 ### 4. The whole robot = many little state machines, in parallel
@@ -143,7 +156,7 @@ stateDiagram-v2
   can't grab the same subsystem, and contention resolves predictably.
 - **Composable.** Sequence, parallelize, race, retry, guard, debounce — nest freely.
 - **Deterministic & testable.** Time is injected, so the whole engine unit‑tests on a
-  laptop (80 tests here, no hardware).
+  laptop (93 tests here, no hardware).
 - **One playbook for TeleOp *and* Auto.** The same actions run in both.
 - **Tiny & free.** Pure‑Java core, zero overhead until you log.
 
@@ -154,8 +167,8 @@ stateDiagram-v2
 | Artifact | What it is | Depends on |
 |---|---|---|
 | **`defined-core`** | The engine: `Action`, `Slot`, `ActionRunner`, 32 action types. Pure Java. | — |
-| **`defined-ftc`** | FTC glue: logcat bridge, action‑driven `OpMode` base. | FTC SDK |
-| **`defined-pedro`** | Pedro Pathing actions: follow a path, lock heading, monitor zones. | Pedro Pathing |
+| **`defined-ftc`** | FTC glue: `Robot` + `RobotOpMode` bases, driver‑station config menu, async telemetry, runtime metrics. | FTC SDK |
+| **`defined-pedro`** | Pedro Pathing actions: follow a path, lock heading, monitor field zones. | Pedro Pathing |
 | **`defined-example-ftc`** | **Realistic robot to copy** — real subsystems, `NavigationAction`, TeleOp + Auto. Compiles vs FTC SDK + Pedro. | core, ftc, pedro |
 | **`defined-examples`** | Hardware‑free **desktop** demo of the engine (runs + unit‑tested on a laptop). | core |
 
@@ -194,7 +207,7 @@ flowchart TD
         AUTO["Auto — one composed Action"]
     end
 
-    TELE -->|"addMonitor(...) + startGroup(...)"| RUN
+    TELE -->|"addMonitor(...) once in init()<br/>startGroup(...) from buttons"| RUN
     AUTO -->|"update(now)"| SEQ["SequentialAction<br/>(drive → intake → shoot → park)"]
 
     RUN["ActionRunner<br/>update(now) every loop"]
@@ -293,9 +306,9 @@ repositories {
     maven { url 'https://cstahie.github.io/defined' }
 }
 dependencies {
-    implementation "com.teamundefined:defined-core:0.1.0"
-    implementation "com.teamundefined:defined-ftc:0.1.0"     // optional FTC glue
-    implementation "com.teamundefined:defined-pedro:0.1.0"   // optional Pedro actions
+    implementation "com.teamundefined:defined-core:0.2.1"
+    implementation "com.teamundefined:defined-ftc:0.2.1"     // optional FTC glue
+    implementation "com.teamundefined:defined-pedro:0.2.1"   // optional Pedro actions
 }
 ```
 
@@ -308,7 +321,7 @@ modules are the glue you only need if you use them.
 ```gradle
 repositories { maven { url 'https://jitpack.io' } }
 dependencies {
-    implementation 'com.github.cstahie.defined:defined-core:v0.1.0'
+    implementation 'com.github.cstahie.defined:defined-core:v0.2.1'
 }
 ```
 </details>
@@ -359,15 +372,29 @@ public void loop() {
 ```java
 ActionRunner runner = new ActionRunner();
 
+public void init() {
+    // Register monitors ONCE. They are slot-free and tick every loop, forever.
+    runner.addMonitor(driveMonitor);
+}
+
 public void loop() {
     long now = nowMs();
-    if (gamepad1.triangle) runner.startGroup(shoot);  // queued if INDEXER is busy
-    runner.addMonitor(driveMonitor);                  // slot‑free, runs every loop
+
+    // Safe to call every loop: startGroup ignores a group that is already running,
+    // so holding the button does not restart the sequence.
+    if (gamepad1.triangle) runner.startGroup(shoot);   // queued if INDEXER is busy
+
     runner.update(now);
 }
 ```
 
-`defined-ftc` gives you an `ActionOpMode` base that owns the runner and clock for you.
+> **Add monitors in `init()`, never in `loop()`.** `addMonitor` appends every time it is
+> called — doing it per-cycle would stack thousands of copies of the same monitor and drag
+> your loop time down until the OpMode is unusable. `startGroup` is the opposite: it is
+> idempotent by design, so it is safe to call from a held button.
+
+`defined-ftc` gives you an `ActionOpMode` base that owns the runner and clock for you, with
+`onInit()` and `onLoop(now)` hooks that put you on the right side of this distinction.
 
 ---
 
@@ -387,7 +414,7 @@ All 32 action types, each with a worked, **tested** example in
 | **Rate control** | `RateLimitAction`, `ThrottledAction` |
 | **Reliability & monitoring** | `WatchdogAction`, `CancelOnAction`, `ManualOverrideAction`, `RetryUntilConfidentAction`, `MetricAction` |
 | **Runner helpers** | `ActionRunner`, `ToggleStartGroupAction`, `WhilePressedAction` |
-| **Pedro** (`defined-pedro`) | `NavigationAction` (+ `Waypoint`), `FollowPathAction`, `HeadingLockAction`, `ZoneMonitor`, `PathUtils` |
+| **Pedro** (`defined-pedro`) | `NavigationAction` (+ `Waypoint`), `FollowPathAction`, `HeadingLockAction`, `ZoneMonitor`, `Perimeter`, `PathUtils` |
 
 ---
 
@@ -418,7 +445,7 @@ flow and more diagrams.
 
 ```bash
 ./gradlew :defined-examples:run     # runs a simulated match (auto + teleop)
-./gradlew test                      # runs all 80 unit tests
+./gradlew test                      # runs all 93 unit tests
 ./gradlew build                     # builds every module incl. the Android AARs
 ```
 
